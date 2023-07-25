@@ -1,17 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:shake/shake.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -19,21 +12,28 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _counter = 0;
+  late ShakeDetector detector;
 
   @override
   void initState() {
-    ShakeDetector detector = ShakeDetector.autoStart(
-      onPhoneShake: () {
-        setState(() {
-          _counter++;
-        });
-      },
-      shakeThresholdGravity: 1.5
-    );
+    WidgetsBinding.instance.addObserver(this);
+    detector = ShakeDetector.autoStart(
+        onPhoneShake: () {
+          setState(() {
+            _counter++;
+          });
+        },
+        shakeThresholdGravity: 1.5);
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   void _incrementCounter() {
@@ -100,5 +100,22 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        detector.startListening();
+
+      case AppLifecycleState.inactive:
+
+      case AppLifecycleState.paused:
+        detector.stopListening();
+
+      case AppLifecycleState.detached:
+        //
+
+    }
   }
 }
